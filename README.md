@@ -3,3 +3,4 @@ This repository is in Russian (except for code and this paragraph). Sorry ;=)
 
 # SmartCan - Умная банка
 "**Умная банка**" - *это устройство для автоматизации соревнований по робототехнике*
+

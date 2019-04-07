@@ -4,8 +4,11 @@ SerialFlow rd(9, 10);
 
 union Packet
 {
-  uint16_t data[3];
-  int16_t ypr[3];
+  uint16_t data[4];
+  struct {
+    uint16_t event;
+    int16_t ypr[3];
+  } v;
 };
 
 void setup()
@@ -23,19 +26,26 @@ void loop()
         p.data[0] = rd.getPacketValue(0);
         p.data[1] = rd.getPacketValue(1);
         p.data[2] = rd.getPacketValue(2);
+        p.data[3] = rd.getPacketValue(3);
 
-        if (p.ypr[0] > 180 || p.ypr[0] < - 180)
-          return;
-        if (p.ypr[1] > 180 || p.ypr[1] < - 180)
-          return;
-        if (p.ypr[2] > 180 || p.ypr[2] < - 180)
-          return;
+        if (p.v.event > 5)
+            return;
+        if (p.v.event == 0) {
+          if (p.v.ypr[0] > 180 || p.v.ypr[0] < - 180)
+            return;
+          if (p.v.ypr[1] > 180 || p.v.ypr[1] < - 180)
+            return;
+          if (p.v.ypr[2] > 180 || p.v.ypr[2] < - 180)
+            return;
+        }
 
-        Serial.print("ypr\t");
-        Serial.print(p.ypr[0]);
+        Serial.print("event: ");
+        Serial.print(p.v.event);
+        Serial.print("\typr\t");
+        Serial.print(p.v.ypr[0]);
         Serial.print("\t");
-        Serial.print(p.ypr[1]);
+        Serial.print(p.v.ypr[1]);
         Serial.print("\t");
-        Serial.println(p.ypr[2]);
+        Serial.println(p.v.ypr[2]);
     }
 }

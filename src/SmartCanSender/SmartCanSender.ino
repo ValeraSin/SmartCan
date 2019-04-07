@@ -5,8 +5,8 @@
 
 union Packet
 {
-  uint16_t data[3];
-  int16_t ypr[3];
+  uint16_t data[4];
+  int16_t ypr[4];
 };
 
 MPU6050 mpu;
@@ -55,7 +55,7 @@ void dmpDataReady() {
 SerialFlow rd(9, 10);
 
 void setup() {
-  rd.setPacketFormat(2, 3);
+  rd.setPacketFormat(2, 4);
   rd.begin(0xF0F0F0F0E3LL, 0xF0F0F0F0D1LL);
 
   Wire.begin();
@@ -127,7 +127,22 @@ void setup() {
 // ================================================================
 
 bool packetReady = false;
-Packet p;
+Packet p, saved, prev;
+
+enum State {
+  InitialState,
+  ResetState,
+  WorkState,
+  EventState
+} state = InitialState;
+
+enum Event {
+  NoEvent,
+  HitEvent,
+  TurnEvent
+} event = NoEvent;
+
+unsigned int iteration = 0;
 
 void loop() {
   // if programming failed, don't try to do anything
@@ -147,18 +162,60 @@ void loop() {
 
   if (packetReady)
   {
-    Serial.print("ypr\t");
+    Serial.print("event: ");
+    Serial.print(event);
+
+    Serial.print("\typr\t");
     Serial.print(p.ypr[0]);
     Serial.print("\t");
     Serial.print(p.ypr[1]);
     Serial.print("\t");
     Serial.println(p.ypr[2]);
 
-    rd.setPacketValue( p.data[0] );
-    rd.setPacketValue( p.data[1] );
-    rd.setPacketValue( p.data[2] );
-    rd.sendPacket();
+    switch (state) {
+    case InitialState:
+      if (saved.ypr[0] != p.ypr[0] || saved.ypr[1] != p.ypr[1] || saved.ypr[2] != p.ypr[2]) {
+        saved = p;
+        iteration++;
+      } else
+        state = ResetState;
+      if (iteration > 100)
+        state = ResetState;
+      break;
+    case ResetState:
+    case EventState:
+      state = WorkState;
+      event = NoEvent;
+      iteration = 0;
+    case WorkState:
 
+      if (p.ypr[0] > (prev.ypr[0] + 35) || p.ypr[0] < (prev.ypr[0] - 35))
+        event = TurnEvent;
+      if (p.ypr[1] > (prev.ypr[1] + 35) || p.ypr[1] < (prev.ypr[1] - 35))
+        event = TurnEvent;
+      if (p.ypr[2] > (prev.ypr[2] + 35) || p.ypr[2] < (prev.ypr[2] - 35))
+        event = TurnEvent;
+
+      if (event != NoEvent)
+        state = EventState;
+      else
+        iteration++;
+      break;
+    }
+
+    if (iteration > 10 || event != NoEvent)
+    {
+      Serial.print("Sent packet with event: ");
+      Serial.println(event);
+      rd.setPacketValue( event );
+      rd.setPacketValue( p.data[0] );
+      rd.setPacketValue( p.data[1] );
+      rd.setPacketValue( p.data[2] );
+      rd.sendPacket();
+      iteration = 0;
+    }
+
+    prev = p;
     packetReady = false;
   }
   
