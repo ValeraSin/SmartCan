@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 
+class SmartCanView;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -14,6 +16,7 @@ signals:
 public slots:
 
 private:
+    SmartCanView *smartCanView;
 };
 
 #endif // MAINWINDOW_H
