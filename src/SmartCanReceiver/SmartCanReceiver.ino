@@ -30,14 +30,12 @@ void loop()
 
         if (p.v.event > 5)
             return;
-        if (p.v.event == 0) {
-          if (p.v.ypr[0] > 180 || p.v.ypr[0] < - 180)
-            return;
-          if (p.v.ypr[1] > 180 || p.v.ypr[1] < - 180)
-            return;
-          if (p.v.ypr[2] > 180 || p.v.ypr[2] < - 180)
-            return;
-        }
+        if (p.v.ypr[0] > 180 || p.v.ypr[0] < - 180)
+          return;
+        if (p.v.ypr[1] > 180 || p.v.ypr[1] < - 180)
+          return;
+        if (p.v.ypr[2] > 180 || p.v.ypr[2] < - 180)
+          return;
 
         Serial.print("event: ");
         Serial.print(p.v.event);
